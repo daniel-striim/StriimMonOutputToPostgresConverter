@@ -1,0 +1,53 @@
+CREATE TABLE public.process_queue_wait_times (
+    batch_queue_id INT,
+    wait_milliseconds INT,
+    source_table_name VARCHAR(255),
+    total_batches_created INT,
+    partition_pruned_batches INT,
+    last_successful_merge_time TIMESTAMP,
+    total_batches_ignored INT,
+    max_integration_time_in_ms INT,
+    avg_in_mem_compaction_time_in_ms INT,
+    avg_batch_size_in_bytes INT,
+    no_of_updates INT,
+    no_of_inserts INT,
+    total_events_merged INT,
+    no_of_ddls INT,
+    no_of_deletes INT,
+    no_of_pkupdates INT,
+    avg_event_count_per_batch INT,
+    min_integration_time_in_ms INT,
+    mapped_source_table VARCHAR(255),  -- Added
+    total_batches_queued INT,  -- Added
+    avg_compaction_time_in_ms INT,
+    avg_waiting_time_in_queue_in_ms INT,
+    avg_integration_time_in_ms INT,
+    total_batches_uploaded INT,
+    avg_merge_time_in_ms INT,
+    last_batch_no_of_updates INT,
+    last_batch_event_count INT,
+    last_batch_no_of_inserts INT,
+    last_batch_max_record_size INT,
+    last_batch_total_events_merged INT,
+    last_batch_no_of_ddls INT,
+    last_batch_sequence_number INT,
+    last_batch_size_in_bytes INT,
+    last_batch_compaction_time_in_ms INT,
+    last_batch_stage_resources_management_time_in_ms INT,
+    last_batch_upload_time_in_ms INT,
+    last_batch_merge_time_in_ms INT,
+    last_batch_in_memory_compaction_time_in_ms INT,
+    last_batch_pk_update_time_in_ms INT,
+    last_batch_ddl_execution_time_in_ms INT,
+    last_batch_total_integration_time_in_ms INT,
+    last_batch_no_of_deletes INT,
+    last_batch_no_of_pkupdates INT,
+    last_batch_accumulation_time_in_ms INT,
+    avg_stage_resources_management_time_in_ms INT,
+    avg_upload_time_in_ms INT,
+    last_batch_batch_event_count INT, -- Added
+    last_batch_max_record_size_in_batch INT, -- Added
+    last_batch_batch_sequence_number INT, -- Added
+    last_batch_batch_size_in_bytes INT, -- Added
+    last_batch_batch_accumulation_time_in_ms INT -- Added
+);
