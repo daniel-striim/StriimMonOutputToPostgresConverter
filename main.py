@@ -11,9 +11,6 @@ def generate_insert_statements(file_path):
     file_path: Path to the file containing the data.
   """
 
-    insertPrepend = "INSERT INTO process_queue_wait_times (batch_queue_id, wait_milliseconds, source_table_name) VALUES"
-    insert_statement = ""
-
     # Initialize variables to store extracted data
     data = {}
     current_table = None
