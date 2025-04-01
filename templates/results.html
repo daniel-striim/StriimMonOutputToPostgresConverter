@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parsed Log Results</title>
+    <script type="text/javascript" charset="utf8" src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
+
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.colVis.min.js"></script>
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+
+        .controls-container {
+            margin-bottom: 15px;
+            display: flex;
+            flex-wrap: wrap; /* Allow wrapping if controls get long */
+            align-items: center;
+            gap: 15px; /* Add space between controls */
+        }
+        .controls-container label {
+             margin-right: 5px; /* Smaller margin */
+             font-weight: bold;
+        }
+         /* Style the buttons container DataTables adds */
+        div.dt-buttons {
+            /* margin-left: 15px; */ /* Add space next to sort dropdown */
+             float: none !important; /* Override default float if needed */
+             margin-bottom: 10px; /* Space below buttons */
+        }
+        /* Ensure buttons look like buttons */
+        button.dt-button {
+             padding: 5px 10px;
+             border: 1px solid #ccc;
+             background-color: #eee;
+             cursor: pointer;
+             border-radius: 3px;
+        }
+        button.dt-button:hover {
+            background-color: #ddd;
+        }
+
+        /* Table container for horizontal scroll if table overflows */
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+        }
+
+        #resultsTable {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        #resultsTable th, #resultsTable td {
+             border: 1px solid #ddd;
+             padding: 8px;
+             text-align: left;
+             white-space: normal; /* Allow wrapping */
+        }
+        #resultsTable th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+         }
+         /* DataTables generated elements */
+         div.dataTables_wrapper div.dataTables_length,
+         div.dataTables_wrapper div.dataTables_filter,
+         div.dataTables_wrapper div.dataTables_info,
+         div.dataTables_wrapper div.dataTables_paginate {
+             margin-top: 10px;
+             margin-bottom: 10px;
+             clear: both; /* Ensure they clear floats */
+         }
+
+        #sqlOutput { width: 95%; height: 300px; margin-top: 15px; font-family: monospace; white-space: pre; border: 1px solid #ccc; padding: 5px; overflow: auto; }
+        .action-button { padding: 8px 15px; margin-top: 15px; cursor: pointer; }
+        .back-link { margin-bottom: 15px; display: inline-block; }
+    </style>
+</head>
+<body>
+    <h1>Parsed Log Results</h1>
+    <a href="{{ url_for('index') }}" class="back-link">&laquo; Parse New Logs</a>
+
+
+    <div class="table-container">
+        <table id="resultsTable" class="display compact cell-border" style="width:100%">
+            <thead>
+                <tr>
+                    {# Use header_info to render headers #}
+                    {% for h_info in header_info %}
+                    <th>{{ h_info.name }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {# Data rendering remains the same #}
+                {% for row in data %}
+                <tr>
+                    {% for cell in row %}
+                    <td>{{ cell if cell is not none else '' }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <button id="generateSqlBtn" class="action-button">Generate PostgreSQL INSERTs</button>
+
+    <h3>Generated SQL:</h3>
+    <textarea id="sqlOutput" readonly>-- Click 'Generate PostgreSQL INSERTs' to see the SQL.</textarea>
+
+    <script>
+        $(document).ready(function() {
+            // --- Column Visibility Setup ---
+            // Get default columns passed from Flask (use 'tojson' filter for safety)
+            const defaultColumnsToShow = {{ default_columns | tojson }};
+            // Get all header info (name and index)
+            const allHeaders = {{ header_info | tojson }};
+
+            // Build columnDefs array dynamically
+            const columnDefs = allHeaders.map(function(header) {
+                // Check if the current header name is in the list of defaults
+                let isVisible = defaultColumnsToShow.includes(header.name);
+                // Return definition for this column index
+                return {
+                    targets: header.index, // Target column by its index
+                    visible: isVisible     // Set visibility based on check
+                };
+            });
+            console.log("Setting initial column visibility:", columnDefs); // Debugging
+
+            // --- Initialize DataTables ---
+            var table = $('#resultsTable').DataTable({
+                 // ** Add 'B' for Buttons to the DOM structure **
+                 // B = Buttons, l = length changing, f = filtering input
+                 // r = processing display element, t = table, i = info summary, p = pagination
+                 "dom": 'Blfrtip', // Common layout: Buttons, Length, Filter -> Table -> Info, Pagination
+
+                 // ** Configure Buttons **
+                 "buttons": [
+                     'colvis' // Add the standard column visibility button
+                     // { // Example of customizing the ColVis button text
+                     //     extend: 'colvis',
+                     //     text: 'Show / Hide Columns'
+                     // }
+                     // Add other buttons if needed: e.g., 'copy', 'csv', 'excel'
+                 ],
+
+                // ** Apply Dynamic Column Visibility **
+                "columnDefs": columnDefs,
+
+                 // ** Add lengthMenu option **
+                 "lengthMenu": [
+                     [10, 25, 50, 100, -1],          // Internal values: -1 means "All"
+                     ['10', '25', '50', '100', 'All'] // Displayed text in the dropdown
+                 ],
+
+                // Standard options
+                "deferRender": true,
+                "pageLength": 10,
+                "ordering": true,
+                "searching": true,
+                "paging": true,
+                "info": true,
+
+                // Remove scrollX unless specifically needed and tested
+                // "scrollX": true,
+                // "autoWidth": false,
+            });
+
+            // External Sort Dropdown Logic (remains the same)
+            $('#sortColumn').on('change', function() {
+                var columnIndex = $(this).val();
+                if (columnIndex !== "" && table) {
+                    console.log(`Sorting by column index: ${columnIndex}`);
+                    table.order([parseInt(columnIndex), 'asc']).draw();
+                }
+            });
+
+            // SQL Generation Button Click (remains the same)
+            $('#generateSqlBtn').on('click', function() {
+                const sqlOutputArea = $('#sqlOutput');
+                sqlOutputArea.val('-- Generating SQL...');
+                fetch("{{ url_for('get_sql') }}")
+                    .then(response => {
+                        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                        return response.text();
+                    })
+                    .then(sql => { sqlOutputArea.val(sql); })
+                    .catch(error => {
+                        console.error('Error fetching SQL:', error);
+                        sqlOutputArea.val('-- Error generating SQL. Check console or server logs.');
+                    });
+            });
+        });
+    </script>
+
+</body>
+</html>
